@@ -32,7 +32,7 @@ function armarMenu() {
     html += `<ion-item href="/agregarjugador">Agregar Jugador</ion-item>
     <ion-item href="/listado">Listado</ion-item>
     <ion-item href="/mapa">Mapa</ion-item>
-    <ion-button slot="end" id="btnCerrarSesion" color="danger">Cerrar sesión</ion-button>
+   <ion-button onclick="logout()" color="danger">Cerrar sesión</ion-button>
     `;
   } else {
     html += `<ion-item href="/registro">Registro</ion-item>
@@ -40,7 +40,7 @@ function armarMenu() {
   }
   document.querySelector("#menu-opciones").innerHTML = html;
 
-  document.querySelector("#btnCerrarSesion")?.addEventListener("click", logout);
+
 }
 
 async function cargarComboPaises() {
@@ -154,7 +154,7 @@ function datosValidosLogin(usuario, password) {
 }
 
 function logout() {
-  localStorage.removeItem("token");
+  localStorage.clear()
     ROUTER.push("/login");
     armarMenu()
 
