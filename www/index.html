@@ -16,7 +16,6 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css"
     />
-
   </head>
   <body>
     <ion-app>
@@ -24,28 +23,24 @@
         <ion-route url="/" component="page-home"></ion-route>
         <ion-route url="/registro" component="page-registro"></ion-route>
         <ion-route url="/login" component="page-login"></ion-route>
-        <ion-route url="/agregarjugador" component="page-agregarjugador"></ion-route>
+        <ion-route
+          url="/agregarjugador"
+          component="page-agregarjugador"
+        ></ion-route>
         <ion-route url="/listado" component="page-listado"></ion-route>
         <ion-route url="/mapa" component="page-mapa"></ion-route>
       </ion-router>
       <ion-nav> </ion-nav>
-
-
 
       <!-- MENU -->
       <ion-menu side="start" menu-id="first" content-id="main" id="menu">
         <ion-header>
           <ion-toolbar color="primary">
             <ion-title>Menu</ion-title>
-          
-    
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <ion-list id="menu-opciones"> 
-
-          </ion-list>
-          
+          <ion-list id="menu-opciones"> </ion-list>
         </ion-content>
       </ion-menu>
       <div id="main"></div>
@@ -59,7 +54,6 @@
               <ion-menu-button></ion-menu-button>
             </ion-buttons>
             <ion-title>Home</ion-title>
-
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
@@ -226,17 +220,11 @@
             <ion-select label="Filtro" id="slcFiltro"> </ion-select>
           </ion-item>
 
-          <ion-item>
-            <table>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <!-- TODO -->
-                </tr>
-              </thead>
-              <tbody id="tablaJugadores"></tbody>
-            </table>
-          </ion-item>
+          <ion-div id="tablaJugadores"> 
+
+    
+          </ion-div>
+          <div style="height: 50px"></div> 
 
           <h2>Estadisticas</h2>
 
@@ -250,7 +238,7 @@
             ></ion-input>
           </ion-item>
 
-            <ion-item>
+          <ion-item>
             <ion-input
               label="Bandera"
               label-placement="floating"
@@ -260,14 +248,13 @@
 
           <h3>Emoji de registros</h3>
 
-           <ion-item>
+          <ion-item>
             <ion-input
               label="Emoji"
               label-placement="floating"
               id="emoji"
             ></ion-input>
           </ion-item>
-
         </ion-content>
       </page-listado>
 
