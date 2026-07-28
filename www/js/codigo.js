@@ -321,7 +321,7 @@ const loading = document.createElement("ion-loading");
 function Loading(texto) {
   loading.cssClass = "my-custom-class";
   loading.message = texto;
-  //loading.duration = 2000;
+  //loading.duration = 20000;
   document.body.appendChild(loading);
   loading.present();
 }
