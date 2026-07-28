@@ -20,6 +20,7 @@ function eventos() {
   ROUTER.addEventListener("ionRouteDidChange", navegar);
   document.querySelector("#btnRegistro").addEventListener("click", registrarUsuario);
   document.querySelector("#btnLogin").addEventListener("click", login);
+  document.querySelector("#slcFiltro").addEventListener("ionChange", cargarListaJugadores);
 }
 
 
@@ -48,6 +49,7 @@ async function cargarComboPaises() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+
     },
   });
   let data = await response.json();
@@ -62,21 +64,27 @@ async function cargarComboPaises() {
 
 async function cargarComboFiltroPaises() {
   Loading("Cargando países...");
-  let response = await fetch(`${URLBASE}/paises`, {
+  let response = await fetch(`${URLBASE}/selecciones`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
   });
   let data = await response.json();
-  let html = ``;
+  let html = `<ion-select-option value="">Todos</ion-select-option>`;
 
-  for (let p of data.paises) {
+  for (let p of data.selecciones) {
     html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
   }
   document.querySelector("#slcFiltro").innerHTML = html;
   LoadingClose();
+
+  
 }
+
+
+
 /* CARGA DE SELECTS */
 
 function navegar(evt) {
@@ -99,17 +107,17 @@ function navegar(evt) {
     MAPA.style.display = "block";
   }
   MENU.close();
-  console.log(ruta);
+  
 }
 
 async function registrarUsuario() {
-  let nombre = document.querySelector("#txtRegistroNombre").value;
+  let usuario = document.querySelector("#txtRegistroNombre").value;
   let pass = document.querySelector("#txtRegistroContraseña").value;
   let pais = document.querySelector("#slcPais").value;
 
-  if (datosValidos(nombre, pass, pais)) {
+  if (datosValidos(usuario, pass, pais)) {
     let objReg = new Object();
-    objReg.usuario = nombre;
+    objReg.usuario = usuario;
     objReg.password = pass;
     objReg.idPais = pais;
 
@@ -123,21 +131,24 @@ async function registrarUsuario() {
       body: JSON.stringify(objReg),
     });
     if (!response.ok) {
-      let data = await response.json();
-      console.log(data.mensaje);
-      Alertar("IMPORTANTE", "Error de Registro de usuario", data.mensaje);
-    } else {
-      MostrarToast("Usuario registrado correctamente", 2000);
 
-      //await login(nombre, pass);
+      let data = await response.json();
+      
+      Alertar("IMPORTANTE", "Error de Registro de usuario", data.mensaje);
+
+    } else {
+      let auth = await response.json();
+      localStorage.setItem("token", auth.token);
+      MostrarToast("Usuario registrado correctamente", 2000);
+      ROUTER.push("/");
     }
     LoadingClose();
   }
 }
 
 
-function datosValidos(nombre, pass, pais) {
-  if (nombre == "" || pass == "" || pais == "") {
+function datosValidos(usuario, pass, pais) {
+  if (usuario == "" || pass == "" || pais == "") {
     alert("Todos los campos son obligatorios");
     return false;
   }
@@ -165,7 +176,7 @@ async function login() {
 
     if (!response.ok) {
       let data = await response.json();
-      console.log(data.mensaje);
+      
       Alertar("IMPORTANTE", "Error de inicio de sesión", data.mensaje);
     } else {
       let data = await response.json();
@@ -173,7 +184,7 @@ async function login() {
       ROUTER.push("/");
       armarMenu();
 
-      console.log("Usuario logueado correctamente");
+      
     }
     LoadingClose();
   }
@@ -191,32 +202,67 @@ function datosValidosLogin(usuario, password) {
 async function cargarListaJugadores() {
   Loading("Cargando jugadores...");
 
+
   let jugadores = await obtenerJugadores();
+  let filtroPais = document.querySelector("#slcFiltro").value;
   let html = `<ion-list>`;
   for (let j of jugadores) {
-    html += `
+    let seleccion = await buscarSeleccionPorId(j.idSeleccion);
+    
+    if (filtroPais == "" || filtroPais == null) {
+      html += `
   <ion-item-sliding>
     <ion-item>
-      <ion-label>${j.nombre}</ion-label>
+      <ion-label>${j.nombre} - ${seleccion.emoji}</ion-label>
     </ion-item>
 
-    <ion-item-options>
+    <ion-item-options side="end">
       <ion-item-option color="danger" onclick="eliminar(${j.id})">Eliminar</ion-item-option>
     </ion-item-options>
-  </ion-item-sliding>
-
-`;
-
-    LoadingClose();
-    html += `</ion-list>`;
+  </ion-item-sliding>`;
+    }else if (filtroPais == seleccion.id) {
+      html += `
+  <ion-item-sliding>
+    <ion-item>
+      <ion-label>${j.nombre} - ${seleccion.emoji}</ion-label>
+    </ion-item>
+    `}
   }
+  html += `</ion-list>`;
+  LoadingClose();
   document.querySelector("#tablaJugadores").innerHTML = html;
 }
 
+async function buscarSeleccionPorId(id) {
+  let selecciones = await getSelecciones();
+  for (let j of selecciones) {
+    if (j.id == id) {
+      return j;
+    }
+  }
+  return null;
+}
+
+
+async function getSelecciones() {
+  let response = await fetch(`${URLBASE}/selecciones`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  let data = await response.json();
+  
+  return data.selecciones;
+
+}
+
+
 async function eliminar(idJ) {
   let jugadores = await eliminarJugador(idJ);
-  //cargarListaJugadores()
   MostrarToast("Jugador eliminado correctamente", 2000);
+  cargarListaJugadores()
 }
 
 async function eliminarJugador(id) {
@@ -229,7 +275,7 @@ async function eliminarJugador(id) {
   });
   if (response.ok) {
     let data = await response.json();
-    console.log(data);
+    
     return data;
   } else {
     return null;
@@ -245,7 +291,7 @@ async function obtenerJugadores() {
     },
   });
   let data = await response.json();
-  console.log(data);
+  
   return data.jugadores;
 }
 
