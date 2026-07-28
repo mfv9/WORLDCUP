@@ -14,13 +14,14 @@ function inicio() {
   eventos();
   armarMenu();
 }
+
+
 function eventos() {
   ROUTER.addEventListener("ionRouteDidChange", navegar);
-  document
-    .querySelector("#btnRegistro")
-    .addEventListener("click", registrarUsuario);
+  document.querySelector("#btnRegistro").addEventListener("click", registrarUsuario);
   document.querySelector("#btnLogin").addEventListener("click", login);
 }
+
 
 function armarMenu() {
   let hayToken = localStorage.getItem("token");
@@ -39,9 +40,8 @@ function armarMenu() {
   <ion-item href="/login">Login</ion-item>`;
   }
   document.querySelector("#menu-opciones").innerHTML = html;
-
-
 }
+
 
 async function cargarComboPaises() {
   let response = await fetch(`${URLBASE}/paises`, {
@@ -107,6 +107,7 @@ async function registrarUsuario() {
   }
 }
 
+
 function datosValidos(nombre, pass, pais) {
   if (nombre == "" || pass == "" || pais == "") {
     alert("Todos los campos son obligatorios");
@@ -114,6 +115,7 @@ function datosValidos(nombre, pass, pais) {
   }
   return true;
 }
+
 
 async function login() {
   let usuario = document.querySelector("#txtLoginUsuario").value;
@@ -131,9 +133,11 @@ async function login() {
       },
       body: JSON.stringify(objLogin),
     });
+
     if (!response.ok) {
       let data = await response.json();
       console.log(data.mensaje);
+      
     } else {
       let data = await response.json();
       localStorage.setItem("token", data.token);
@@ -145,6 +149,7 @@ async function login() {
   }
 }
 
+
 function datosValidosLogin(usuario, password) {
   if (usuario == "" || password == "") {
     alert("Todos los campos son obligatorios");
@@ -155,10 +160,11 @@ function datosValidosLogin(usuario, password) {
 
 function logout() {
   localStorage.clear()
-    ROUTER.push("/login");
-    armarMenu()
+  ROUTER.push("/login");
+  armarMenu()
 
 }
+
 
 function ocultarPantallas() {
   HOME.style.display = "none";
