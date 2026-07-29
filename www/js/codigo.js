@@ -21,6 +21,9 @@ function eventos() {
   document.querySelector("#btnRegistro").addEventListener("click", registrarUsuario);
   document.querySelector("#btnLogin").addEventListener("click", login);
   document.querySelector("#slcFiltro").addEventListener("ionChange", cargarListaJugadores);
+  document.querySelector("#btnAgregarJugador").addEventListener("click", agregarJugador);
+
+
 }
 
 
@@ -42,6 +45,8 @@ function armarMenu() {
   }
   document.querySelector("#menu-opciones").innerHTML = html;
 }
+
+
 /* CARGA DE SELECTS */
 async function cargarComboPaises() {
   Loading("Cargando países...");
@@ -80,9 +85,51 @@ async function cargarComboFiltroPaises() {
   document.querySelector("#slcFiltro").innerHTML = html;
   LoadingClose();
 
-  
+
 }
 
+async function cargarComboFiltroPaisesParaAgregar() {
+  Loading("Cargando países...");
+  let response = await fetch(`${URLBASE}/selecciones`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  let data = await response.json();
+  let html = ``;
+
+  for (let p of data.selecciones) {
+    html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+  }
+  document.querySelector("#slcSeleccion").innerHTML = html;
+  LoadingClose();
+
+
+}
+
+
+async function cargarComboPosiciones() {
+  Loading("Cargando posiciones...");
+  let response = await fetch(`${URLBASE}/posiciones`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  let data = await response.json();
+  let html = ``;
+
+  for (let p of data.posiciones) {
+    html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+  }
+  document.querySelector("#slcPosicion").innerHTML = html;
+  LoadingClose();
+
+
+}
 
 
 /* CARGA DE SELECTS */
@@ -99,6 +146,8 @@ function navegar(evt) {
     LOGIN.style.display = "block";
   } else if (ruta == "/agregarjugador") {
     AGREGARJUGADOR.style.display = "block";
+    cargarComboFiltroPaisesParaAgregar();
+    cargarComboPosiciones()
   } else if (ruta == "/listado") {
     cargarComboFiltroPaises();
     cargarListaJugadores();
@@ -107,7 +156,7 @@ function navegar(evt) {
     MAPA.style.display = "block";
   }
   MENU.close();
-  
+
 }
 
 async function registrarUsuario() {
@@ -133,7 +182,7 @@ async function registrarUsuario() {
     if (!response.ok) {
 
       let data = await response.json();
-      
+
       Alertar("IMPORTANTE", "Error de Registro de usuario", data.mensaje);
 
     } else {
@@ -176,7 +225,7 @@ async function login() {
 
     if (!response.ok) {
       let data = await response.json();
-      
+
       Alertar("IMPORTANTE", "Error de inicio de sesión", data.mensaje);
     } else {
       let data = await response.json();
@@ -184,7 +233,7 @@ async function login() {
       ROUTER.push("/");
       armarMenu();
 
-      
+
     }
     LoadingClose();
   }
@@ -208,7 +257,7 @@ async function cargarListaJugadores() {
   let html = `<ion-list>`;
   for (let j of jugadores) {
     let seleccion = await buscarSeleccionPorId(j.idSeleccion);
-    
+
     if (filtroPais == "" || filtroPais == null) {
       html += `
   <ion-item-sliding>
@@ -220,7 +269,7 @@ async function cargarListaJugadores() {
       <ion-item-option color="danger" onclick="eliminar(${j.id})">Eliminar</ion-item-option>
     </ion-item-options>
   </ion-item-sliding>`;
-    }else if (filtroPais == seleccion.id) {
+    } else if (filtroPais == seleccion.id) {
       html += `
   <ion-item-sliding>
     <ion-item>
@@ -253,7 +302,7 @@ async function getSelecciones() {
     },
   });
   let data = await response.json();
-  
+
   return data.selecciones;
 
 }
@@ -275,7 +324,7 @@ async function eliminarJugador(id) {
   });
   if (response.ok) {
     let data = await response.json();
-    
+
     return data;
   } else {
     return null;
@@ -291,13 +340,102 @@ async function obtenerJugadores() {
     },
   });
   let data = await response.json();
-  
+
   return data.jugadores;
 }
 
-//async function genAI(){
 
-//}
+
+function datosValidosAgregarJugador(nombre, fechaNacimiento, idSeleccion, posicion) {
+  if (nombre == "" || fechaNacimiento == "" || idSeleccion == "" || posicion == "") {
+    alert("Todos los campos son obligatorios");
+    return false;
+  } else if (new Date(fechaNacimiento) > new Date()) {
+    alert("La fecha de nacimiento no puede ser mayor a la fecha actual");
+    return false;
+  }
+  return true;
+}
+
+
+async function agregarJugador() {
+  let nombre = document.querySelector("#txtNombreAgregarJugador").value;
+  let fechaNacimiento = document.querySelector("#datetime").value;
+  let idSeleccion = document.querySelector("#slcSeleccion").value;
+  let posicion = document.querySelector("#slcPosicion").value;
+  let comentario = document.querySelector("#txtComentario").value;
+console.log(comentario);
+
+  if (comentario == "") {
+    Alertar("IMPORTANTE", "Comentario obligatorio", "Debe ingresar un comentario para poder agregar el jugador");
+    return;
+  }
+
+  if (!datosValidosAgregarJugador(nombre, fechaNacimiento, idSeleccion, posicion)) {
+    return;
+  }
+
+  let comentarioModerado = await moderarComentario(comentario);
+  console.log(comentarioModerado);
+
+  if (comentarioModerado < 0.5) {
+    Alertar("IMPORTANTE", "Comentario inapropiado", "El comentario ingresado no es apropiado para agregar el jugador");
+    return;
+  }
+
+  let objJugador = new Object();
+  objJugador.nombre = nombre;
+  objJugador.fechaNacimiento = fechaNacimiento;
+  objJugador.idSeleccion = idSeleccion;
+  objJugador.posicion = posicion;
+
+  Loading("Agregando jugador...");
+  try {
+    let response = await fetch(`${URLBASE}/jugadores`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(objJugador),
+    });
+
+    if (!response.ok) {
+      let data = await response.json();
+      Alertar("IMPORTANTE", "Error al agregar jugador", data.mensaje);
+    } else {
+      let data = await response.json();
+      MostrarToast("Jugador agregado correctamente", 2000);
+      ROUTER.push("/listado");
+    }
+  } catch (error) {
+    Alertar("IMPORTANTE", "Error de red", "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.");
+  }
+  LoadingClose();
+
+
+}
+async function moderarComentario(txtComentario) {
+  Loading("Moderando comentario...");
+  try {
+    let response = await fetch(`${URLBASE}/genai`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ prompt: txtComentario })
+    });
+    let data = await response.json();
+    console.log(data);
+    LoadingClose();
+    return data.score;
+  } catch (error) {
+    LoadingClose();
+    Alertar("IMPORTANTE", "Error de red", "No se pudo conectar con el servidor para moderar el comentario. Por favor, intente nuevamente más tarde.");
+    return 0;
+  }
+}
 
 function logout() {
   localStorage.clear();
