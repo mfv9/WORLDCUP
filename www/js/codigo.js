@@ -253,10 +253,12 @@ async function cargarListaJugadores() {
 
 
   let jugadores = await obtenerJugadores();
+  let selecciones = await getSelecciones();
   let filtroPais = document.querySelector("#slcFiltro").value;
   let html = `<ion-list>`;
   for (let j of jugadores) {
-    let seleccion = await buscarSeleccionPorId(j.idSeleccion);
+    //let seleccion = await buscarSeleccionPorId(j.idSeleccion);
+    let seleccion = buscarSeleccionDelJugador(j.idSeleccion, selecciones);
 
     if (filtroPais == "" || filtroPais == null) {
       html += `
@@ -282,7 +284,15 @@ async function cargarListaJugadores() {
   document.querySelector("#tablaJugadores").innerHTML = html;
 }
 
-async function buscarSeleccionPorId(id) {
+
+function buscarSeleccionDelJugador(idSeleccion, selecciones) {
+  for (let s of selecciones) {
+    if (s.id == idSeleccion) {
+      return s;
+    }
+  }
+}
+/* async function buscarSeleccionPorId(id) {
   let selecciones = await getSelecciones();
   for (let j of selecciones) {
     if (j.id == id) {
@@ -291,7 +301,7 @@ async function buscarSeleccionPorId(id) {
   }
   return null;
 }
-
+ */
 
 async function getSelecciones() {
   let response = await fetch(`${URLBASE}/selecciones`, {
@@ -364,7 +374,7 @@ async function agregarJugador() {
   let idSeleccion = document.querySelector("#slcSeleccion").value;
   let posicion = document.querySelector("#slcPosicion").value;
   let comentario = document.querySelector("#txtComentario").value;
-console.log(comentario);
+
 
   if (comentario == "") {
     Alertar("IMPORTANTE", "Comentario obligatorio", "Debe ingresar un comentario para poder agregar el jugador");
@@ -376,7 +386,7 @@ console.log(comentario);
   }
 
   let comentarioModerado = await moderarComentario(comentario);
-  console.log(comentarioModerado);
+
 
   if (comentarioModerado < 0.5) {
     Alertar("IMPORTANTE", "Comentario inapropiado", "El comentario ingresado no es apropiado para agregar el jugador");
@@ -400,6 +410,11 @@ console.log(comentario);
       body: JSON.stringify(objJugador),
     });
 
+    if (response.status === 401) {
+      MandarAlLogin();
+      return;
+    }
+
     if (!response.ok) {
       let data = await response.json();
       Alertar("IMPORTANTE", "Error al agregar jugador", data.mensaje);
@@ -412,9 +427,16 @@ console.log(comentario);
     Alertar("IMPORTANTE", "Error de red", "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.");
   }
   LoadingClose();
-
-
 }
+
+function mandarAlLogin() {
+  Alertar("IMPORTANTE", "Sesión expirada", "Su sesión ha expirado. Por favor, inicie sesión nuevamente.");
+  localStorage.clear();
+  ROUTER.push("/login");
+  armarMenu();
+}
+
+
 async function moderarComentario(txtComentario) {
   Loading("Moderando comentario...");
   try {
@@ -427,7 +449,6 @@ async function moderarComentario(txtComentario) {
       body: JSON.stringify({ prompt: txtComentario })
     });
     let data = await response.json();
-    console.log(data);
     LoadingClose();
     return data.score;
   } catch (error) {
