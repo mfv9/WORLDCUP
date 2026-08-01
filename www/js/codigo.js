@@ -15,17 +15,19 @@ function inicio() {
   armarMenu();
 }
 
-
 function eventos() {
   ROUTER.addEventListener("ionRouteDidChange", navegar);
-  document.querySelector("#btnRegistro").addEventListener("click", registrarUsuario);
+  document
+    .querySelector("#btnRegistro")
+    .addEventListener("click", registrarUsuario);
   document.querySelector("#btnLogin").addEventListener("click", login);
-  document.querySelector("#slcFiltro").addEventListener("ionChange", cargarListaJugadores);
-  document.querySelector("#btnAgregarJugador").addEventListener("click", agregarJugador);
-
-
+  document
+    .querySelector("#slcFiltro")
+    .addEventListener("ionChange", cargarListaJugadores);
+  document
+    .querySelector("#btnAgregarJugador")
+    .addEventListener("click", agregarJugador);
 }
-
 
 function armarMenu() {
   let hayToken = localStorage.getItem("token");
@@ -46,7 +48,6 @@ function armarMenu() {
   document.querySelector("#menu-opciones").innerHTML = html;
 }
 
-
 /* CARGA DE SELECTS */
 async function cargarComboPaises() {
   Loading("Cargando países...");
@@ -54,7 +55,6 @@ async function cargarComboPaises() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-
     },
   });
   let data = await response.json();
@@ -84,8 +84,6 @@ async function cargarComboFiltroPaises() {
   }
   document.querySelector("#slcFiltro").innerHTML = html;
   LoadingClose();
-
-
 }
 
 async function cargarComboFiltroPaisesParaAgregar() {
@@ -105,10 +103,7 @@ async function cargarComboFiltroPaisesParaAgregar() {
   }
   document.querySelector("#slcSeleccion").innerHTML = html;
   LoadingClose();
-
-
 }
-
 
 async function cargarComboPosiciones() {
   Loading("Cargando posiciones...");
@@ -127,10 +122,7 @@ async function cargarComboPosiciones() {
   }
   document.querySelector("#slcPosicion").innerHTML = html;
   LoadingClose();
-
-
 }
-
 
 /* CARGA DE SELECTS */
 
@@ -147,16 +139,17 @@ function navegar(evt) {
   } else if (ruta == "/agregarjugador") {
     AGREGARJUGADOR.style.display = "block";
     cargarComboFiltroPaisesParaAgregar();
-    cargarComboPosiciones()
+    cargarComboPosiciones();
   } else if (ruta == "/listado") {
     cargarComboFiltroPaises();
     cargarListaJugadores();
+    cargarEstadisticas();
     LISTADO.style.display = "block";
   } else if (ruta == "/mapa") {
     MAPA.style.display = "block";
+    crearMapa();
   }
   MENU.close();
-
 }
 
 async function registrarUsuario() {
@@ -180,11 +173,9 @@ async function registrarUsuario() {
       body: JSON.stringify(objReg),
     });
     if (!response.ok) {
-
       let data = await response.json();
 
       Alertar("IMPORTANTE", "Error de Registro de usuario", data.mensaje);
-
     } else {
       let auth = await response.json();
       localStorage.setItem("token", auth.token);
@@ -195,7 +186,6 @@ async function registrarUsuario() {
   }
 }
 
-
 function datosValidos(usuario, pass, pais) {
   if (usuario == "" || pass == "" || pais == "") {
     alert("Todos los campos son obligatorios");
@@ -203,7 +193,6 @@ function datosValidos(usuario, pass, pais) {
   }
   return true;
 }
-
 
 async function login() {
   let usuario = document.querySelector("#txtLoginUsuario").value;
@@ -232,13 +221,10 @@ async function login() {
       localStorage.setItem("token", data.token);
       ROUTER.push("/");
       armarMenu();
-
-
     }
     LoadingClose();
   }
 }
-
 
 function datosValidosLogin(usuario, password) {
   if (usuario == "" || password == "") {
@@ -250,7 +236,6 @@ function datosValidosLogin(usuario, password) {
 
 async function cargarListaJugadores() {
   Loading("Cargando jugadores...");
-
 
   let jugadores = await obtenerJugadores();
   let selecciones = await getSelecciones();
@@ -277,13 +262,13 @@ async function cargarListaJugadores() {
     <ion-item>
       <ion-label>${j.nombre} - ${seleccion.emoji}</ion-label>
     </ion-item>
-    `}
+    `;
+    }
   }
   html += `</ion-list>`;
   LoadingClose();
   document.querySelector("#tablaJugadores").innerHTML = html;
 }
-
 
 function buscarSeleccionDelJugador(idSeleccion, selecciones) {
   for (let s of selecciones) {
@@ -292,16 +277,15 @@ function buscarSeleccionDelJugador(idSeleccion, selecciones) {
     }
   }
 }
-/* async function buscarSeleccionPorId(id) {
-  let selecciones = await getSelecciones();
-  for (let j of selecciones) {
-    if (j.id == id) {
-      return j;
+
+function buscarPosicionPorId(idPosicion, posiciones) {
+  for (let p of posiciones) {
+    if (p.id == idPosicion) {
+      return p;
     }
   }
   return null;
 }
- */
 
 async function getSelecciones() {
   let response = await fetch(`${URLBASE}/selecciones`, {
@@ -312,16 +296,44 @@ async function getSelecciones() {
     },
   });
   let data = await response.json();
-
-  return data.selecciones;
-
+  if (response.status === 401) {
+    mandarAlLogin();
+    return;
+  }
+  if (!response.ok) {
+    let data = await response.json();
+    Alertar("IMPORTANTE", "Error al obtener selecciones", data.mensaje);
+    return [];
+  } else {
+    return data.selecciones;
+  }
 }
 
+async function getPosiciones() {
+  let response = await fetch(`${URLBASE}/posiciones`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  let data = await response.json();
+  if (response.status === 401) {
+    mandarAlLogin();
+    return;
+  }
+  if (!response.ok) {
+    Alertar("IMPORTANTE", "Error al obtener posiciones", data.mensaje);
+    return [];
+  } else {
+    return data.posiciones;
+  }
+}
 
 async function eliminar(idJ) {
   let jugadores = await eliminarJugador(idJ);
   MostrarToast("Jugador eliminado correctamente", 2000);
-  cargarListaJugadores()
+  cargarListaJugadores();
 }
 
 async function eliminarJugador(id) {
@@ -354,10 +366,154 @@ async function obtenerJugadores() {
   return data.jugadores;
 }
 
+async function obtenerPaises() {
+  Loading("Cargando países...");
+  let response = await fetch(`${URLBASE}/paises`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  let data = await response.json();
+  if (!response.ok) {
+    Alertar("IMPORTANTE", "Error al obtener países", data.mensaje);
+    LoadingClose();
+    return [];
+  } else {
+    LoadingClose();
+    return data.paises;
+  }
+}
 
+async function obtenerUsuariosPorPais() {
+  Loading("Cargando usuarios por país...");
+  let response = await fetch(`${URLBASE}/usuariosPorPais`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  let data = await response.json();
 
-function datosValidosAgregarJugador(nombre, fechaNacimiento, idSeleccion, posicion) {
-  if (nombre == "" || fechaNacimiento == "" || idSeleccion == "" || posicion == "") {
+  if (response.status === 401) {
+    mandarAlLogin();
+    return;
+  }
+  if (!response.ok) {
+    Alertar("IMPORTANTE", "Error al obtener usuarios por país", data.mensaje);
+    LoadingClose();
+    return [];
+  } else {
+    LoadingClose();
+    return data.paises;
+  }
+}
+
+function obtenerSeleccionFavorita(jugadores, selecciones) {
+  let conteo = {};
+
+  for (let j of jugadores) {
+    if (!conteo[j.idSeleccion]) {
+      conteo[j.idSeleccion] = 0;
+    }
+    conteo[j.idSeleccion] = conteo[j.idSeleccion] + 1;
+  }
+
+  let idFavorita = null;
+  let maxCantidad = 0;
+
+  for (let id in conteo) {
+    if (conteo[id] > maxCantidad) {
+      maxCantidad = conteo[id];
+      idFavorita = id;
+    }
+  }
+
+  let seleccion = buscarSeleccionDelJugador(idFavorita, selecciones);
+  seleccion.cantidad = maxCantidad;
+  return seleccion;
+}
+
+function obtenerTipoJugadorPredominante(jugadores, posiciones) {
+  let totalCampo = 0;
+  let totalArqueros = 0;
+
+  for (let j of jugadores) {
+    let posicion = buscarPosicionPorId(j.posicion, posiciones);
+
+    // Si no se encuentra la posición, evitar el error y asumir jugador de campo
+    if (
+      posicion &&
+      posicion.nombre &&
+      posicion.nombre.toLowerCase() == "arquero"
+    ) {
+      totalArqueros = totalArqueros + 1;
+    } else {
+      totalCampo = totalCampo + 1;
+    }
+  }
+
+  if (totalArqueros > totalCampo) {
+    return {
+      emoji: "🥅",
+      etiqueta: "Arquero",
+      totalCampo: totalCampo,
+      totalArqueros: totalArqueros,
+    };
+  }
+  return {
+    emoji: "⚽",
+    etiqueta: "Jugador de campo",
+    totalCampo: totalCampo,
+    totalArqueros: totalArqueros,
+  };
+}
+
+async function cargarEstadisticas() {
+  Loading("Cargando estadísticas...");
+
+  let jugadores = await obtenerJugadores();
+  let selecciones = await getSelecciones();
+  let posiciones = await getPosiciones();
+
+  if (jugadores.length == 0) {
+    document.querySelector("#seleccionFavorita").innerHTML =
+      "<p>Todavía no tenés jugadores registrados.</p>";
+    document.querySelector("#tipoJugadorPredominante").innerHTML = "";
+    LoadingClose();
+    return;
+  }
+
+  let seleccionFavorita = obtenerSeleccionFavorita(jugadores, selecciones);
+  let tipoPredominante = obtenerTipoJugadorPredominante(jugadores, posiciones);
+
+  document.querySelector("#seleccionFavorita").innerHTML = `
+    <ion-item>
+      <ion-label>${seleccionFavorita.emoji} ${seleccionFavorita.nombre} — ${seleccionFavorita.cantidad} jugador(es)</ion-label>
+    </ion-item>
+  `;
+
+  document.querySelector("#tipoJugadorPredominante").innerHTML = `
+    <ion-item>
+      <ion-label>${tipoPredominante.emoji} ${tipoPredominante.etiqueta} (${tipoPredominante.totalCampo} de campo · ${tipoPredominante.totalArqueros} arquero/s)</ion-label>
+    </ion-item>
+  `;
+  LoadingClose();
+}
+
+function datosValidosAgregarJugador(
+  nombre,
+  fechaNacimiento,
+  idSeleccion,
+  posicion,
+) {
+  if (
+    nombre == "" ||
+    fechaNacimiento == "" ||
+    idSeleccion == "" ||
+    posicion == ""
+  ) {
     alert("Todos los campos son obligatorios");
     return false;
   } else if (new Date(fechaNacimiento) > new Date()) {
@@ -367,7 +523,6 @@ function datosValidosAgregarJugador(nombre, fechaNacimiento, idSeleccion, posici
   return true;
 }
 
-
 async function agregarJugador() {
   let nombre = document.querySelector("#txtNombreAgregarJugador").value;
   let fechaNacimiento = document.querySelector("#datetime").value;
@@ -375,21 +530,29 @@ async function agregarJugador() {
   let posicion = document.querySelector("#slcPosicion").value;
   let comentario = document.querySelector("#txtComentario").value;
 
-
   if (comentario == "") {
-    Alertar("IMPORTANTE", "Comentario obligatorio", "Debe ingresar un comentario para poder agregar el jugador");
+    Alertar(
+      "IMPORTANTE",
+      "Comentario obligatorio",
+      "Debe ingresar un comentario para poder agregar el jugador",
+    );
     return;
   }
 
-  if (!datosValidosAgregarJugador(nombre, fechaNacimiento, idSeleccion, posicion)) {
+  if (
+    !datosValidosAgregarJugador(nombre, fechaNacimiento, idSeleccion, posicion)
+  ) {
     return;
   }
 
   let comentarioModerado = await moderarComentario(comentario);
 
-
   if (comentarioModerado < 0.5) {
-    Alertar("IMPORTANTE", "Comentario inapropiado", "El comentario ingresado no es apropiado para agregar el jugador");
+    Alertar(
+      "IMPORTANTE",
+      "Comentario inapropiado",
+      "El comentario ingresado no es apropiado para agregar el jugador",
+    );
     return;
   }
 
@@ -411,7 +574,7 @@ async function agregarJugador() {
     });
 
     if (response.status === 401) {
-      MandarAlLogin();
+      mandarAlLogin();
       return;
     }
 
@@ -424,18 +587,25 @@ async function agregarJugador() {
       ROUTER.push("/listado");
     }
   } catch (error) {
-    Alertar("IMPORTANTE", "Error de red", "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.");
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
   }
   LoadingClose();
 }
 
 function mandarAlLogin() {
-  Alertar("IMPORTANTE", "Sesión expirada", "Su sesión ha expirado. Por favor, inicie sesión nuevamente.");
+  Alertar(
+    "IMPORTANTE",
+    "Sesión expirada",
+    "Su sesión ha expirado. Por favor, inicie sesión nuevamente.",
+  );
   localStorage.clear();
   ROUTER.push("/login");
   armarMenu();
 }
-
 
 async function moderarComentario(txtComentario) {
   Loading("Moderando comentario...");
@@ -446,15 +616,56 @@ async function moderarComentario(txtComentario) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({ prompt: txtComentario })
+      body: JSON.stringify({ prompt: txtComentario }),
     });
     let data = await response.json();
     LoadingClose();
     return data.score;
   } catch (error) {
     LoadingClose();
-    Alertar("IMPORTANTE", "Error de red", "No se pudo conectar con el servidor para moderar el comentario. Por favor, intente nuevamente más tarde.");
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor para moderar el comentario. Por favor, intente nuevamente más tarde.",
+    );
     return 0;
+  }
+}
+
+function crearMapa() {
+  Loading("Cargando Mapa");
+  setTimeout(function () {
+    cargarMapa();
+  }, 1000);
+  LoadingClose();
+}
+
+var map = null;
+async function cargarMapa() {
+  if (map != null) {
+    map.remove();
+  }
+  map = L.map("map").setView([-34.89457123080363, -56.15285498172172], 14);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    minZoom: 1,
+    attribution:
+      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+
+  let paises = await obtenerPaises();
+  let usuarios = await obtenerUsuariosPorPais();
+
+  for (let p of paises) {
+    for (let u of usuarios) {
+      if (p.id == u.id) {
+        let marker = L.marker([p.latitud, p.longitud]).addTo(map);
+        marker.bindTooltip(
+          `<b>${p.nombre}</b><br>Usuarios: ${u.cantidadDeUsuarios}`,
+        );
+      }
+    }
   }
 }
 
@@ -463,7 +674,6 @@ function logout() {
   ROUTER.push("/login");
   armarMenu();
 }
-
 
 function ocultarPantallas() {
   HOME.style.display = "none";
