@@ -34,7 +34,6 @@ function armarMenu() {
   let html = `
       <ion-item href="/">Home</ion-item>
       `;
-
   if (hayToken) {
     html += `<ion-item href="/agregarjugador">Agregar Jugador</ion-item>
     <ion-item href="/listado">Listado</ion-item>
@@ -50,78 +49,126 @@ function armarMenu() {
 
 /* CARGA DE SELECTS */
 async function cargarComboPaises() {
-  Loading("Cargando países...");
-  let response = await fetch(`${URLBASE}/paises`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  let data = await response.json();
-  let html = ``;
+  try {
+    Loading("Cargando países...");
+    let response = await fetch(`${URLBASE}/paises`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    let data = await response.json();
+    let html = ``;
 
-  for (let p of data.paises) {
-    html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    for (let p of data.paises) {
+      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    }
+    document.querySelector("#slcPais").innerHTML = html;
+    LoadingClose();
+  } catch (error) {
+    LoadingClose();
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
   }
-  document.querySelector("#slcPais").innerHTML = html;
-  LoadingClose();
 }
 
 async function cargarComboFiltroPaises() {
-  Loading("Cargando países...");
-  let response = await fetch(`${URLBASE}/selecciones`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-  let html = `<ion-select-option value="">Todos</ion-select-option>`;
+  try {
+    Loading("Cargando países...");
+    let response = await fetch(`${URLBASE}/selecciones`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    let data = await response.json();
+    if (response.status === 401) {
+      mandarAlLogin();
+      return;
+    }
+    let html = `<ion-select-option value="">Todos</ion-select-option>`;
 
-  for (let p of data.selecciones) {
-    html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    for (let p of data.selecciones) {
+      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    }
+    document.querySelector("#slcFiltro").innerHTML = html;
+    LoadingClose();
+  } catch (error) {
+    LoadingClose();
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
   }
-  document.querySelector("#slcFiltro").innerHTML = html;
-  LoadingClose();
 }
 
 async function cargarComboFiltroPaisesParaAgregar() {
-  Loading("Cargando países...");
-  let response = await fetch(`${URLBASE}/selecciones`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-  let html = ``;
+  try {
+    Loading("Cargando países...");
+    let response = await fetch(`${URLBASE}/selecciones`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    let data = await response.json();
+    if (response.status === 401) {
+      mandarAlLogin();
+      return;
+    }
+    let html = ``;
 
-  for (let p of data.selecciones) {
-    html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    for (let p of data.selecciones) {
+      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    }
+    document.querySelector("#slcSeleccion").innerHTML = html;
+    LoadingClose();
+  } catch (error) {
+    LoadingClose();
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
   }
-  document.querySelector("#slcSeleccion").innerHTML = html;
-  LoadingClose();
 }
 
 async function cargarComboPosiciones() {
-  Loading("Cargando posiciones...");
-  let response = await fetch(`${URLBASE}/posiciones`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-  let html = ``;
+  try {
+    Loading("Cargando posiciones...");
+    let response = await fetch(`${URLBASE}/posiciones`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    let data = await response.json();
+    if (response.status === 401) {
+      mandarAlLogin();
+      return;
+    }
+    let html = ``;
 
-  for (let p of data.posiciones) {
-    html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    for (let p of data.posiciones) {
+      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    }
+    document.querySelector("#slcPosicion").innerHTML = html;
+    LoadingClose();
+  } catch (error) {
+    LoadingClose();
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
   }
-  document.querySelector("#slcPosicion").innerHTML = html;
-  LoadingClose();
 }
 
 /* CARGA DE SELECTS */
@@ -165,22 +212,30 @@ async function registrarUsuario() {
 
     Loading("Registrando usuario...");
 
-    let response = await fetch(`${URLBASE}/usuarios`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(objReg),
-    });
-    if (!response.ok) {
-      let data = await response.json();
-
-      Alertar("IMPORTANTE", "Error de Registro de usuario", data.mensaje);
-    } else {
-      let auth = await response.json();
-      localStorage.setItem("token", auth.token);
-      MostrarToast("Usuario registrado correctamente", 2000);
-      ROUTER.push("/");
+    try {
+      let response = await fetch(`${URLBASE}/usuarios`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(objReg),
+      });
+      if (!response.ok) {
+        let data = await response.json();
+        Alertar("IMPORTANTE", "Error de Registro de usuario", data.mensaje);
+      } else {
+        let auth = await response.json();
+        localStorage.setItem("token", auth.token);
+        MostrarToast("Usuario registrado correctamente", 2000);
+        armarMenu()
+        ROUTER.push("/");
+      }
+    } catch (error) {
+      Alertar(
+        "IMPORTANTE",
+        "Error de red",
+        "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+      );
     }
     LoadingClose();
   }
@@ -204,23 +259,30 @@ async function login() {
     objLogin.password = password;
 
     Loading("Iniciando sesión...");
-    let response = await fetch(`${URLBASE}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(objLogin),
-    });
+    try {
+      let response = await fetch(`${URLBASE}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(objLogin),
+      });
 
-    if (!response.ok) {
-      let data = await response.json();
-
-      Alertar("IMPORTANTE", "Error de inicio de sesión", data.mensaje);
-    } else {
-      let data = await response.json();
-      localStorage.setItem("token", data.token);
-      ROUTER.push("/");
-      armarMenu();
+      if (!response.ok) {
+        let data = await response.json();
+        Alertar("IMPORTANTE", "Error de inicio de sesión", data.mensaje);
+      } else {
+        let data = await response.json();
+        localStorage.setItem("token", data.token);
+        ROUTER.push("/");
+        armarMenu();
+      }
+    } catch (error) {
+      Alertar(
+        "IMPORTANTE",
+        "Error de red",
+        "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+      );
     }
     LoadingClose();
   }
@@ -288,45 +350,60 @@ function buscarPosicionPorId(idPosicion, posiciones) {
 }
 
 async function getSelecciones() {
-  let response = await fetch(`${URLBASE}/selecciones`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-  if (response.status === 401) {
-    mandarAlLogin();
-    return;
-  }
-  if (!response.ok) {
+  try {
+    let response = await fetch(`${URLBASE}/selecciones`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     let data = await response.json();
-    Alertar("IMPORTANTE", "Error al obtener selecciones", data.mensaje);
-    return [];
-  } else {
+    if (response.status === 401) {
+      mandarAlLogin();
+      return [];
+    }
+    if (!response.ok) {
+      Alertar("IMPORTANTE", "Error al obtener selecciones", data.mensaje);
+      return [];
+    }
     return data.selecciones;
+  } catch (error) {
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
+    return [];
   }
 }
 
 async function getPosiciones() {
-  let response = await fetch(`${URLBASE}/posiciones`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-  if (response.status === 401) {
-    mandarAlLogin();
-    return;
-  }
-  if (!response.ok) {
-    Alertar("IMPORTANTE", "Error al obtener posiciones", data.mensaje);
-    return [];
-  } else {
+  try {
+    let response = await fetch(`${URLBASE}/posiciones`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    let data = await response.json();
+    if (response.status === 401) {
+      mandarAlLogin();
+      return [];
+    }
+    if (!response.ok) {
+      Alertar("IMPORTANTE", "Error al obtener posiciones", data.mensaje);
+      return [];
+    }
     return data.posiciones;
+  } catch (error) {
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
+    return [];
   }
 }
 
@@ -337,76 +414,120 @@ async function eliminar(idJ) {
 }
 
 async function eliminarJugador(id) {
-  let response = await fetch(`${URLBASE}/jugadores/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  if (response.ok) {
-    let data = await response.json();
-
-    return data;
-  } else {
+  try {
+    let response = await fetch(`${URLBASE}/jugadores/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (response.status === 401) {
+      mandarAlLogin();
+      return null;
+    }
+    if (response.ok) {
+      let data = await response.json();
+      return data;
+    }
+    return null;
+  } catch (error) {
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
     return null;
   }
 }
 
 async function obtenerJugadores() {
-  let response = await fetch(`${URLBASE}/jugadores`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-
-  return data.jugadores;
+  try {
+    let response = await fetch(`${URLBASE}/jugadores`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    let data = await response.json();
+    if (response.status === 401) {
+      mandarAlLogin();
+      return [];
+    }
+    if (!response.ok) {
+      Alertar("IMPORTANTE", "Error al obtener jugadores", data.mensaje);
+      return [];
+    }
+    return data.jugadores;
+  } catch (error) {
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
+    return [];
+  }
 }
 
 async function obtenerPaises() {
-  Loading("Cargando países...");
-  let response = await fetch(`${URLBASE}/paises`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  let data = await response.json();
-  if (!response.ok) {
-    Alertar("IMPORTANTE", "Error al obtener países", data.mensaje);
-    LoadingClose();
-    return [];
-  } else {
+  try {
+    Loading("Cargando países...");
+    let response = await fetch(`${URLBASE}/paises`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    let data = await response.json();
+    if (!response.ok) {
+      Alertar("IMPORTANTE", "Error al obtener países", data.mensaje);
+      LoadingClose();
+      return [];
+    }
     LoadingClose();
     return data.paises;
+  } catch (error) {
+    LoadingClose();
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
+    return [];
   }
 }
 
 async function obtenerUsuariosPorPais() {
-  Loading("Cargando usuarios por país...");
-  let response = await fetch(`${URLBASE}/usuariosPorPais`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
-  let data = await response.json();
-
-  if (response.status === 401) {
-    mandarAlLogin();
-    return;
-  }
-  if (!response.ok) {
-    Alertar("IMPORTANTE", "Error al obtener usuarios por país", data.mensaje);
-    LoadingClose();
-    return [];
-  } else {
+  try {
+    Loading("Cargando usuarios por país...");
+    let response = await fetch(`${URLBASE}/usuariosPorPais`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    let data = await response.json();
+    if (response.status === 401) {
+      mandarAlLogin();
+      return [];
+    }
+    if (!response.ok) {
+      Alertar("IMPORTANTE", "Error al obtener usuarios por país", data.mensaje);
+      LoadingClose();
+      return [];
+    }
     LoadingClose();
     return data.paises;
+  } catch (error) {
+    LoadingClose();
+    Alertar(
+      "IMPORTANTE",
+      "Error de red",
+      "No se pudo conectar con el servidor. Por favor, intente nuevamente más tarde.",
+    );
+    return [];
   }
 }
 
@@ -530,6 +651,7 @@ async function agregarJugador() {
   let posicion = document.querySelector("#slcPosicion").value;
   let comentario = document.querySelector("#txtComentario").value;
 
+
   if (comentario == "") {
     Alertar(
       "IMPORTANTE",
@@ -584,6 +706,7 @@ async function agregarJugador() {
     } else {
       let data = await response.json();
       MostrarToast("Jugador agregado correctamente", 2000);
+
       ROUTER.push("/listado");
     }
   } catch (error) {
