@@ -57,14 +57,22 @@ async function cargarComboPaises() {
         "Content-Type": "application/json",
       },
     });
-    let data = await response.json();
-    let html = ``;
-
-    for (let p of data.paises) {
-      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    if (!response.ok) {
+      let data = await response.json();
+      Alertar("IMPORTANTE", "Error al obtener países", data.mensaje);
+      LoadingClose();
     }
-    document.querySelector("#slcPais").innerHTML = html;
-    LoadingClose();
+    else {
+
+      let data = await response.json();
+      let html = ``;
+
+      for (let p of data.paises) {
+        html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+      }
+      document.querySelector("#slcPais").innerHTML = html;
+      LoadingClose();
+    }
   } catch (error) {
     LoadingClose();
     Alertar(
@@ -85,18 +93,25 @@ async function cargarComboFiltroPaises() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return;
     }
-    let html = `<ion-select-option value="">Todos</ion-select-option>`;
+    if (!response.ok) {
+      let data = await response.json();
+      Alertar("IMPORTANTE", "Error al obtener selecciones", data.mensaje);
+      LoadingClose();
+    } else {
+      let data = await response.json();
+      let html = `<ion-select-option value="">Todos</ion-select-option>`;
 
-    for (let p of data.selecciones) {
-      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+      for (let p of data.selecciones) {
+        html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+      }
+      document.querySelector("#slcFiltro").innerHTML = html;
+      LoadingClose();
     }
-    document.querySelector("#slcFiltro").innerHTML = html;
-    LoadingClose();
   } catch (error) {
     LoadingClose();
     Alertar(
@@ -117,18 +132,26 @@ async function cargarComboFiltroPaisesParaAgregar() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return;
     }
-    let html = ``;
 
-    for (let p of data.selecciones) {
-      html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+    if (!response.ok) {
+      let data = await response.json();
+      Alertar("IMPORTANTE", "Error al obtener selecciones", data.mensaje);
+      LoadingClose();
+    } else {
+      let data = await response.json();
+      let html = ``;
+
+      for (let p of data.selecciones) {
+        html += `<ion-select-option value="${p.id}">${p.nombre}</ion-select-option>`;
+      }
+      document.querySelector("#slcSeleccion").innerHTML = html;
+      LoadingClose();
     }
-    document.querySelector("#slcSeleccion").innerHTML = html;
-    LoadingClose();
   } catch (error) {
     LoadingClose();
     Alertar(
@@ -149,11 +172,18 @@ async function cargarComboPosiciones() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return;
     }
+    if (!response.ok) {
+      let data = await response.json();
+      Alertar("IMPORTANTE", "Error al obtener posiciones", data.mensaje);
+      LoadingClose();
+      return;
+    }
+    let data = await response.json();
     let html = ``;
 
     for (let p of data.posiciones) {
@@ -243,7 +273,7 @@ async function registrarUsuario() {
 
 function datosValidos(usuario, pass, pais) {
   if (usuario == "" || pass == "" || pais == "") {
-    alert("Todos los campos son obligatorios");
+    Alertar("IMPORTANTE", "Error de validación", "Todos los campos son obligatorios");
     return false;
   }
   return true;
@@ -290,7 +320,7 @@ async function login() {
 
 function datosValidosLogin(usuario, password) {
   if (usuario == "" || password == "") {
-    alert("Todos los campos son obligatorios");
+    Alertar("IMPORTANTE", "Error de validación", "Todos los campos son obligatorios");
     return false;
   }
   return true;
@@ -304,7 +334,6 @@ async function cargarListaJugadores() {
   let filtroPais = document.querySelector("#slcFiltro").value;
   let html = `<ion-list>`;
   for (let j of jugadores) {
-    //let seleccion = await buscarSeleccionPorId(j.idSeleccion);
     let seleccion = buscarSeleccionDelJugador(j.idSeleccion, selecciones);
 
     if (filtroPais == "" || filtroPais == null) {
@@ -324,7 +353,11 @@ async function cargarListaJugadores() {
     <ion-item>
       <ion-label>${j.nombre} - ${seleccion.emoji}</ion-label>
     </ion-item>
-    `;
+
+    <ion-item-options side="end">
+      <ion-item-option color="danger" onclick="eliminar(${j.id})">Eliminar</ion-item-option>
+    </ion-item-options>
+  </ion-item-sliding>`;
     }
   }
   html += `</ion-list>`;
@@ -338,6 +371,7 @@ function buscarSeleccionDelJugador(idSeleccion, selecciones) {
       return s;
     }
   }
+  return null;
 }
 
 function buscarPosicionPorId(idPosicion, posiciones) {
@@ -358,11 +392,12 @@ async function getSelecciones() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return [];
     }
+    let data = await response.json();
     if (!response.ok) {
       Alertar("IMPORTANTE", "Error al obtener selecciones", data.mensaje);
       return [];
@@ -387,11 +422,12 @@ async function getPosiciones() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return [];
     }
+    let data = await response.json();
     if (!response.ok) {
       Alertar("IMPORTANTE", "Error al obtener posiciones", data.mensaje);
       return [];
@@ -409,8 +445,11 @@ async function getPosiciones() {
 
 async function eliminar(idJ) {
   let jugadores = await eliminarJugador(idJ);
-  MostrarToast("Jugador eliminado correctamente", 2000);
-  cargarListaJugadores();
+  if (jugadores != null) {
+    MostrarToast("Jugador eliminado correctamente", 2000);
+    cargarListaJugadores();
+    cargarEstadisticas();
+  }
 }
 
 async function eliminarJugador(id) {
@@ -450,11 +489,12 @@ async function obtenerJugadores() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return [];
     }
+    let data = await response.json();
     if (!response.ok) {
       Alertar("IMPORTANTE", "Error al obtener jugadores", data.mensaje);
       return [];
@@ -508,11 +548,12 @@ async function obtenerUsuariosPorPais() {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
-    let data = await response.json();
+
     if (response.status === 401) {
       mandarAlLogin();
       return [];
     }
+    let data = await response.json();
     if (!response.ok) {
       Alertar("IMPORTANTE", "Error al obtener usuarios por país", data.mensaje);
       LoadingClose();
@@ -532,22 +573,34 @@ async function obtenerUsuariosPorPais() {
 }
 
 function obtenerSeleccionFavorita(jugadores, selecciones) {
-  let conteo = {};
+  let conteos = [];
 
   for (let j of jugadores) {
-    if (!conteo[j.idSeleccion]) {
-      conteo[j.idSeleccion] = 0;
+    let encontrado = null;
+
+    for (let c of conteos) {
+      if (c.id == j.idSeleccion) {
+        encontrado = c;
+      }
     }
-    conteo[j.idSeleccion] = conteo[j.idSeleccion] + 1;
+
+    if (encontrado == null) {
+      let nuevoConteo = new Object();
+      nuevoConteo.id = j.idSeleccion;
+      nuevoConteo.cantidad = 1;
+      conteos.push(nuevoConteo);
+    } else {
+      encontrado.cantidad = encontrado.cantidad + 1;
+    }
   }
 
   let idFavorita = null;
   let maxCantidad = 0;
 
-  for (let id in conteo) {
-    if (conteo[id] > maxCantidad) {
-      maxCantidad = conteo[id];
-      idFavorita = id;
+  for (let c of conteos) {
+    if (c.cantidad > maxCantidad) {
+      maxCantidad = c.cantidad;
+      idFavorita = c.id;
     }
   }
 
@@ -563,7 +616,6 @@ function obtenerTipoJugadorPredominante(jugadores, posiciones) {
   for (let j of jugadores) {
     let posicion = buscarPosicionPorId(j.posicion, posiciones);
 
-    // Si no se encuentra la posición, evitar el error y asumir jugador de campo
     if (
       posicion &&
       posicion.nombre &&
@@ -582,13 +634,22 @@ function obtenerTipoJugadorPredominante(jugadores, posiciones) {
       totalCampo: totalCampo,
       totalArqueros: totalArqueros,
     };
+  } else if (totalCampo > totalArqueros) {
+    return {
+      emoji: "⚽",
+      etiqueta: "Jugador de campo",
+      totalCampo: totalCampo,
+      totalArqueros: totalArqueros,
+    }
+
+  } else {
+    return {
+      emoji: "🤝",
+      etiqueta: "Empate",
+      totalCampo: totalCampo,
+      totalArqueros: totalArqueros,
+    };
   }
-  return {
-    emoji: "⚽",
-    etiqueta: "Jugador de campo",
-    totalCampo: totalCampo,
-    totalArqueros: totalArqueros,
-  };
 }
 
 async function cargarEstadisticas() {
@@ -601,7 +662,7 @@ async function cargarEstadisticas() {
   if (jugadores.length == 0) {
     document.querySelector("#seleccionFavorita").innerHTML =
       "<p>Todavía no tenés jugadores registrados.</p>";
-    document.querySelector("#tipoJugadorPredominante").innerHTML = "";
+    document.querySelector("#tipoJugadorPredominante").innerHTML = "<p>Todavía no tenés jugadores registrados.</p>";
     LoadingClose();
     return;
   }
@@ -635,10 +696,10 @@ function datosValidosAgregarJugador(
     idSeleccion == "" ||
     posicion == ""
   ) {
-    alert("Todos los campos son obligatorios");
+    Alertar("IMPORTANTE", "Error de validación", "Todos los campos son obligatorios");
     return false;
   } else if (new Date(fechaNacimiento) > new Date()) {
-    alert("La fecha de nacimiento no puede ser mayor a la fecha actual");
+    Alertar("IMPORTANTE", "Error de validación", "La fecha de nacimiento no puede ser mayor a la fecha actual");
     return false;
   }
   return true;
@@ -760,7 +821,6 @@ function crearMapa() {
   setTimeout(function () {
     cargarMapa();
   }, 1000);
-  LoadingClose();
 }
 
 var map = null;
@@ -790,6 +850,7 @@ async function cargarMapa() {
       }
     }
   }
+  LoadingClose();
 }
 
 function logout() {
